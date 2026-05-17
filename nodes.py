@@ -1,4 +1,6 @@
 import os
+import sys
+import subprocess
 import cv2
 import yaml
 import torch
@@ -163,11 +165,29 @@ class HalloNode:
         src_audio_path = os.path.join(output_dir, f"hallo_{output_name}_src_audio.wav")
         torchaudio.save(src_audio_path, waveform, sample_rate)
 
-        env = ':'.join([os.environ.get('PYTHONPATH', ''), cur_dir])
-        cmd = f"""PYTHONPATH={env} python {infer_py} --config "{tmp_yaml_path}" --source_image "{src_img_path}" --driving_audio "{src_audio_path}" --output {output_video_path} --pose_weight {pose_weight} --face_weight {face_weight} --lip_weight {lip_weight} --face_expand_ratio {face_expand_ratio}"""
-        
-        print(cmd)
-        os.system(cmd)
+        env = os.environ.copy()
+        launcher = (
+            "import runpy, sys; "
+            f"sys.path.insert(0, {cur_dir!r}); "
+            f"runpy.run_path({infer_py!r}, run_name='__main__')"
+        )
+
+        cmd = [
+            sys.executable,
+            "-c",
+            launcher,
+            "--config", tmp_yaml_path,
+            "--source_image", src_img_path,
+            "--driving_audio", src_audio_path,
+            "--output", output_video_path,
+            "--pose_weight", str(pose_weight),
+            "--face_weight", str(face_weight),
+            "--lip_weight", str(lip_weight),
+            "--face_expand_ratio", str(face_expand_ratio),
+        ]
+
+        print(" ".join(f'"{arg}"' if " " in arg else arg for arg in cmd))
+        subprocess.run(cmd, check=True, env=env, cwd=cur_dir)
         os.remove(tmp_yaml_path)
 
         gen = cv_frame_generator(output_video_path)

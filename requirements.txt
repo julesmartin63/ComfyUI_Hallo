@@ -19,9 +19,4 @@ tqdm
 isort
 pylint
 pre-commit
-accelerate
-xformers
-torch
-torchaudio
 numpy
-opencv-python

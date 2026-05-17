@@ -55,14 +55,18 @@ managing positional encoding, and integrating with external libraries for effici
 import math
 
 import torch
-import xformers
-import xformers.ops
 from diffusers.models.attention import FeedForward
 from diffusers.models.attention_processor import Attention, AttnProcessor
 from diffusers.utils import BaseOutput
 from diffusers.utils.import_utils import is_xformers_available
 from einops import rearrange, repeat
 from torch import nn
+
+try:
+    import xformers
+    import xformers.ops
+except ImportError:
+    xformers = None
 
 
 def zero_module(module):
